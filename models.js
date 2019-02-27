@@ -1,5 +1,5 @@
 "use strict";
-
+// Blogging App
 const mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
 
