@@ -22,7 +22,7 @@ app.get("/posts", (req, res) => {
         })
         .catch(err => {
             console.error(err);
-            res.status(500).json({message: "Internal server error"});
+            res.status(500).json({error: "Something went wrong"});
         });
 });
 
@@ -32,7 +32,7 @@ app.get("/posts/:id", (req, res) => {
         .then(post => res.json(post.serialize()))
         .catch(err => {
             console.error(err);
-            res.status(500).json({ message: "internal server error"});
+            res.status(500).json({ error: "something went awry"});
         });
 });
 
@@ -56,30 +56,8 @@ app.post("/posts", (req, res) => {
         .then(blogPost => res.status(201).json(blogPost.serialize()))
         .catch(err => {
             console.error(err);
-            res.status(500).json({message: "Internal server error"});
+            res.status(500).json({error: "Something went wrong"});
         });
-});
-
-app.put("/posts/:id", (req, res) => {
-    if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
-        const message =
-            `Request path id (${req.paramd.id}) and request body id ` + 
-            `(${req.body.id}) must watch`;
-        console.error(message);
-        return res.status(400).json({message: message});
-    }
-    const toUpdate = {};
-    const updateableFields = ["author", "title", "content" ];
-
-    updateableFields.forEach(field => {
-        if (field in req.body) {
-            toUpdate[field] = req.body[field];
-        }
-    });
-    BlogPost
-        .findByIdAndUpdate(req.params.id, { $set: toUpdate }, {new: true})
-        .then(updatePost => res.status(204).end())
-        .catch(err => res.status(500).json({ message: "Internal server error"}));
 });
 
 app.delete("/:id", (req, res) => {
@@ -91,6 +69,33 @@ app.delete("/:id", (req, res) => {
         });
 });
 
+app.put("/posts/:id", (req, res) => {
+    if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
+        res.status(400).json(
+            {error: "Request path id and request body id values must match"
+        });
+    }
+    const Updated = {};
+    const updateableFields = ["author", "title", "content" ];
+
+    updateableFields.forEach(field => {
+        if (field in req.body) {
+            Update[field] = req.body[field];
+        }
+    });
+    BlogPost
+        .findByIdAndUpdate(req.params.id, { $set: Update }, {new: true})
+        .then(updatedPost => res.status(204).end())
+        .catch(err => res.status(500).json({ message: "Internal server error"}));
+});
+app.delete("/:id", (req, res) => {
+    BlogPost
+    .findByIdAndRemove(req.params.id)
+    .then(() => {
+        console.log(`deleted blog post with id \`${req.params.id}\``);
+        res.status(204).end();
+    });
+});
 app.use("*", function(req, res) {
     res.status(404).json({message: "Not Found"});
 });
@@ -99,23 +104,19 @@ let server;
 
 function runServer(databaseUrl, port = PORT) {
     return new Promise((resolve, reject) => {
-        mongoose.connect(
-            databaseUrl,
-            err => {
-                if (err) {
-                    return reject(err);
-                }
-                server = app
-                    .listen(port, () => {
-                        console.log(`Your app is listening on port ${port}`);
-                        resolve();
-                    })
-                    .on("error", err => {
-                        mongoose.disconnect();
-                        reject(err);
-                    });
+        mongoose.connect(databaseUrl, err => {
+            if (err) {
+                return reject(err);
             }
-        );
+            server = app.listen(port, () => {
+                console.log(`Your app is listening on port ${port}`);
+                resolve();
+            })
+                .on("error", err => {
+                    mongoose.disconnect();
+                    reject(err);
+                });
+            });
     });
 }
 
