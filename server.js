@@ -10,7 +10,7 @@ const {DATABASE_URL, PORT } = require("./config");
 const { BlogPost } = require("./models");
 
 const app = express();
-app.use(express.json());
+
 app.use(morgan('common'));
 app.use(express.json());
 
